@@ -14,6 +14,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-gray-100 min-h-screen">
         {children}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+          }
+        `
+        }} />
       </body>
     </html>
   )
