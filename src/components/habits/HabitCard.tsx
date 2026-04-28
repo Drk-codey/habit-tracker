@@ -16,15 +16,17 @@ type Props = {
 export default function HabitCard({ habit, onUpdate }: Props) {
   const slug = getHabitSlug(habit.name)
   const today = new Date().toISOString().split('T')[0]
-  const isCompleted = habit.completions.includes(today)
-  const streak = calculateCurrentStreak(habit.completions, today)
+  const [completions, setCompletions] = useState<string[]>(habit.completions)
+  const isCompleted = completions.includes(today)
+  const streak = calculateCurrentStreak(completions, today)
 
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   function handleToggle() {
-    const updated = toggleHabitCompletion(habit, today)
+    const updated = toggleHabitCompletion({ ...habit, completions }, today)
     updateHabit(updated)
+    setCompletions(updated.completions)
     onUpdate()
   }
 
@@ -75,7 +77,7 @@ export default function HabitCard({ habit, onUpdate }: Props) {
           }`}
         >
           {isCompleted ? <><Check className="w-4 h-4" /> Done</> : 'Mark Done'}
-        </button>
+          </button>
       </div>
 
       <div className="flex gap-2 mt-3">
