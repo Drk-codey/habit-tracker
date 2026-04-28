@@ -58,11 +58,15 @@ export default function HabitForm({ initialValues, onSave, onCancel }: Props) {
           id="habit-freq"
           data-testid="habit-frequency-select"
           value="daily"
-          disabled //check later for changes
-          className="w-full border rounded px-3 py-2 mt-1 bg-white"
-        >
+          onChange={() => { }}
+          aria-readonly="true"
+          className="w-full border rounded px-3 py-2 mt-1 bg-gray-100 text-gray-500 cursor-default"
+          title="Only daily frequency is supported at this stage"        >
           <option value="daily">Daily</option>
         </select>
+        <p className="text-xs text-gray-400 mt-1">
+          Only daily frequency is available right now.
+        </p>
       </div>
 
       <div className="flex gap-2">

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import HabitList from '@/components/habits/HabitList'
 import { saveHabits, getHabits } from '@/lib/storage'
 import type { Habit } from '@/types/habit'
@@ -93,7 +93,7 @@ describe('habit form', () => {
     expect(getHabits()).toHaveLength(0)
   })
 
-  it('toggles completion and updates the streak display', () => {
+  it('toggles completion and updates the streak display', async () => {
     saveHabits([sampleHabit])
 
     render(<HabitList userId={userId} habits={[sampleHabit]} onUpdate={() => {}} />)
@@ -103,8 +103,19 @@ describe('habit form', () => {
 
     fireEvent.click(screen.getByTestId('habit-complete-drink-water'))
 
+    await waitFor(() => {
+      expect(screen.getByTestId('habit-streak-drink-water').textContent).toContain('1')
+    })
+
     const today = new Date().toISOString().split('T')[0]
     const saved = getHabits()
     expect(saved[0].completions).toContain(today)
+
+    // Toggle off — streak should return to 0
+    fireEvent.click(screen.getByTestId('habit-complete-drink-water'))
+    await waitFor(() => {
+      expect(screen.getByTestId('habit-streak-drink-water').textContent).toContain('0')
+    })
+    expect(getHabits()[0].completions).not.toContain(today)
   })
 })
