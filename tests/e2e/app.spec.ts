@@ -116,8 +116,18 @@ test.describe('Habit Tracker app', () => {
 
     // Try to navigate — should not hard crash
     await page.goto('/')
-    const body = await page.locator('body').textContent()
-    expect(body).not.toBeNull()
-    expect(body!.length).toBeGreaterThan(0)
+
+    const splash = page.getByTestId('splash-screen')
+    const loginPage = page.locator('[data-testid="auth-login-email"]')
+ 
+    const appRendered =
+      (await splash.isVisible().catch(() => false)) ||
+      (await loginPage.isVisible().catch(() => false))
+ 
+    expect(appRendered).toBe(true)
+
+    // Also check the body text doesn't contain network error messages
+    const pageText = (await page.locator('body').textContent()) ?? ''
+    expect(pageText).not.toMatch(/ERR_|This site can.t be reached|net::ERR/i)
   })
 })
