@@ -10,7 +10,7 @@ export function calculateCurrentStreak(completions: string[], today?: string): n
 
   // Count backwards from today
   let streak = 0
-  let current = new Date(todayStr)
+  const current = new Date(todayStr)
 
   while (true) {
     const dateStr = current.toISOString().split('T')[0]
