@@ -1,17 +1,22 @@
 import { test, expect, Page } from '@playwright/test'
 
-// Helper: signs up and lands on dashboard
+
 async function signUp(page: Page, email: string, password = 'password123') {
   await page.goto('/signup')
+  await page.getByTestId('auth-signup-email').waitFor({ state: 'visible' })
   await page.getByTestId('auth-signup-email').fill(email)
   await page.getByTestId('auth-signup-password').fill(password)
   await page.getByTestId('auth-signup-submit').click()
-  await page.waitForURL('/dashboard')
+  await page.waitForURL('/dashboard', { waitUntil: 'domcontentloaded' })
 }
 
-// Helper: clears localStorage before each test
+async function logout(page: Page) {
+  await page.getByTestId('auth-logout-button').click()
+  await page.waitForURL('/login', { waitUntil: 'domcontentloaded' })
+}
+
 async function clearStorage(page: Page) {
-  await page.goto('/')
+  await page.goto('/login')
   await page.evaluate(() => localStorage.clear())
 }
 
@@ -44,25 +49,25 @@ test.describe('Habit Tracker app', () => {
     await expect(page.getByTestId('empty-state')).toBeVisible()
   })
 
-  test('logs in an existing user and loads only that user\'s habits', async ({ page }) => {
-    // Create two users with separate habits
+  test("logs in an existing user and loads only that user's habits", async ({ page }) => {
     await signUp(page, 'user1@test.com')
     await page.getByTestId('create-habit-button').click()
     await page.getByTestId('habit-name-input').fill('User1 Habit')
     await page.getByTestId('habit-save-button').click()
-    await page.getByTestId('auth-logout-button').click()
+
+    await logout(page)
 
     await signUp(page, 'user2@test.com')
     await page.getByTestId('create-habit-button').click()
     await page.getByTestId('habit-name-input').fill('User2 Habit')
     await page.getByTestId('habit-save-button').click()
-    await page.getByTestId('auth-logout-button').click()
 
-    // Log back in as user1
+    await logout(page)
+
     await page.getByTestId('auth-login-email').fill('user1@test.com')
     await page.getByTestId('auth-login-password').fill('password123')
     await page.getByTestId('auth-login-submit').click()
-    await page.waitForURL('/dashboard')
+    await page.waitForURL('/dashboard', { waitUntil: 'domcontentloaded' })
 
     await expect(page.getByTestId('habit-card-user1-habit')).toBeVisible()
     await expect(page.getByTestId('habit-card-user2-habit')).not.toBeVisible()
@@ -102,32 +107,39 @@ test.describe('Habit Tracker app', () => {
 
   test('logs out and redirects to /login', async ({ page }) => {
     await signUp(page, 'logout@test.com')
-    await page.getByTestId('auth-logout-button').click()
-    await page.waitForURL('/login')
+    // Use logout() helper so this test also verifies the full redirect
+    await logout(page)
+    await expect(page).toHaveURL('/login')
   })
 
-  test('loads the cached app shell when offline after the app has been loaded once', async ({ page, context }) => {
-    // Load the app first (caches the shell)
+  test('loads the cached app shell when offline after the app has been loaded once', async ({
+    page,
+    context,
+  }) => {
+    // Load the app online first so the service worker can cache the shell
     await signUp(page, 'offline@test.com')
-    await page.waitForTimeout(2000) // let service worker install
+    // Give the service worker time to install and finish caching
+    await page.waitForTimeout(2000)
 
-    // Go offline
+    // Cut the network
     await context.setOffline(true)
 
-    // Try to navigate — should not hard crash
+    // Navigate to root — the service worker should serve the cached shell
     await page.goto('/')
 
+    // Assert a real app element is visible, not just a non-empty body.
+    // A browser ERR_ page has neither the splash screen nor the login form.
     const splash = page.getByTestId('splash-screen')
-    const loginPage = page.locator('[data-testid="auth-login-email"]')
- 
+    const loginInput = page.locator('[data-testid="auth-login-email"]')
+
     const appRendered =
       (await splash.isVisible().catch(() => false)) ||
-      (await loginPage.isVisible().catch(() => false))
- 
+      (await loginInput.isVisible().catch(() => false))
+
     expect(appRendered).toBe(true)
 
-    // Also check the body text doesn't contain network error messages
-    const pageText = (await page.locator('body').textContent()) ?? ''
-    expect(pageText).not.toMatch(/ERR_|This site can.t be reached|net::ERR/i)
+    // Extra guard: no browser error text in the body
+    const bodyText = (await page.locator('body').textContent()) ?? ''
+    expect(bodyText).not.toMatch(/ERR_|This site can.t be reached|net::ERR/i)
   })
 })
