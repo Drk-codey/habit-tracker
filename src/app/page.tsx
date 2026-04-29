@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import SplashScreen from '@/components/shared/SplashScreen'
 import { getSession } from '@/lib/storage'
+import { SPLASH_DURATION_MS } from '@/lib/constants'
 
 export default function HomePage() {
   const router = useRouter()
@@ -16,7 +17,7 @@ export default function HomePage() {
       } else {
         router.push('/login')
       }
-    }, 1000)
+    }, SPLASH_DURATION_MS)
 
     return () => clearTimeout(timer)
   }, [router])

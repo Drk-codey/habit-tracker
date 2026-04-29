@@ -1,9 +1,6 @@
 import type { User, Session } from '@/types/auth'
 import type { Habit } from '@/types/habit'
-
-const USERS_KEY = 'habit-tracker-users'
-const SESSION_KEY = 'habit-tracker-session'
-const HABITS_KEY = 'habit-tracker-habits'
+import { USERS_KEY, SESSION_KEY, HABITS_KEY } from './constants'
 
 // Users 
 
