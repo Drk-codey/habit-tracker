@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { getSession, getHabitsForUser, clearSession } from '@/lib/storage'
 import type { Habit } from '@/types/habit'
 import HabitList from '@/components/habits/HabitList'
+import ProtectedRoute from '@/components/shared/ProtectedRoute'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -36,6 +37,8 @@ export default function DashboardPage() {
   if (!ready) return null
 
   return (
+
+    <ProtectedRoute>
     <main data-testid="dashboard-page" className="max-w-lg mx-auto p-4">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-green-700">My Habits</h1>
@@ -53,5 +56,6 @@ export default function DashboardPage() {
 
       <HabitList userId={userId} habits={habits} onUpdate={reloadHabits} />
     </main>
+    </ProtectedRoute>
   )
 }
