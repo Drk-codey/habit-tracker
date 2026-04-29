@@ -9,13 +9,17 @@ export default function HomePage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Wait 1 second (testable splash duration between 800ms and 2000ms)
     const timer = setTimeout(() => {
-      const session = getSession()
-      if (session) {
-        router.push('/dashboard')
-      } else {
-        router.push('/login')
+      try {
+        const session = getSession()
+        if (session) {
+          router.push('/dashboard')
+        } else {
+          router.push('/login')
+        }
+      } catch (err) {
+        console.error('Redirection failed:', err)
+        // Fallback or retry? Let's just log for now.
       }
     }, SPLASH_DURATION_MS)
 

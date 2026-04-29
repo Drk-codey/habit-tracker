@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { findUserByEmail, createUser, saveSession } from '@/lib/storage'
+import { signUp } from '@/lib/auth'
+import { saveSession } from '@/lib/storage'
 
 export default function SignupForm() {
   const router = useRouter()
@@ -13,13 +14,16 @@ export default function SignupForm() {
     e.preventDefault()
     setError('')
 
-    if (findUserByEmail(email)) {
-      setError('User already exists')
+    const result = signUp(email, password)
+    if (result.error) {
+      setError(result.error)
       return
     }
 
-    const user = createUser(email, password)
-    saveSession({ userId: user.id, email: user.email })
+    const { user } = result
+    if(user) {
+      saveSession({ userId: user.id, email: user.email })
+    }
     router.push('/dashboard')
   }
 
