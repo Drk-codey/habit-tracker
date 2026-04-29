@@ -36,7 +36,7 @@ export default function HabitCard({ habit, onUpdate }: Props) {
   }
 
   function handleSaveEdit(name: string, description: string) {
-    updateHabit({ ...habit, name, description })
+    updateHabit({ ...habit, completions, name, description })
     setEditing(false)
     onUpdate()
   }
