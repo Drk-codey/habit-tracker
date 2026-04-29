@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
+# Habit Tracker PWA
+ 
+A mobile-first Progressive Web App for tracking daily habits. Built with Next.js, React, TypeScript, and Tailwind CSS. All data is stored locally in the browser using `localStorage` — no server, no database.
+ 
+---
+ 
+## Project overview
+ 
+Users can sign up, log in, create habits, mark them complete each day, and watch their streak grow. The app installs as a PWA and loads the app shell offline after the first visit.
+ 
+---
+ 
+## Setup instructions
+ 
+**Requirements:** Node.js ≥ 20.9.0
+ 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. Clone the repository
+git clone <your-repo-url>
+cd habit-tracker
+ 
+# 2. Install dependencies
+npm install
+ 
+# 3. Install Playwright browsers (needed for E2E tests)
+npx playwright install --with-deps
 ```
+ 
+---
+ 
+## Run instructions
+ 
+```bash
+# Start the development server
+npm run dev
+# → Open http://localhost:3000
+ 
+# Build for production
+npm run build
+ 
+# Start the production server
+npm run start
+```
+ 
+---
+ 
+## Test instructions
+ 
+```bash
+# Run unit tests with coverage report
+npm run test:unit
+ 
+# Run unit + integration tests
+npm run test:integration
+ 
+# Run end-to-end tests (requires dev server running on port 3000)
+npm run test:e2e
+ 
+# Run all tests in sequence
+npm run test
+```
+ 
+Coverage report is generated in the `/coverage` directory after `test:unit` runs.
+The minimum threshold is **80% line coverage** for all files inside `src/lib/`.
+ 
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Local Persistence
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+All data is stored in the browser's `localStorage` under three keys:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `habit-tracker-users` — array of user accounts
+- `habit-tracker-session` — current logged-in user session (or null)
+- `habit-tracker-habits` — all habits across all users
 
-## Learn More
+No backend or database is required.
 
-To learn more about Next.js, take a look at the following resources:
+## PWA support
+ 
+The app is installable as a Progressive Web App via three mechanisms:
+ 
+1. **`public/manifest.json`** — declares app name, icons, start URL, and display mode (`standalone`). Linked from `<head>` in `layout.tsx`.
+2. **`public/sw.js`** — a service worker that caches the app shell on `install` and serves cached responses when offline.
+3. **Service worker registration** — registered in `layout.tsx` via an inline `<script>` that calls `navigator.serviceWorker.register('/sw.js')` on the client side.
+After the first load, navigating to `/` while offline will serve the cached shell instead of a network error.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Trade-offs / Limitations
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Passwords are stored in plain text in localStorage
+- No server-side rendering for protected routes (redirects happen client-side)
+- Data is per-browser and cannot be shared between devices
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Test file map
+ 
+| File | What it verifies |
+|------|-----------------|
+| `tests/unit/slug.test.ts` | `getHabitSlug()` — lowercasing, hyphenation, space collapsing, special-char removal |
+| `tests/unit/validators.test.ts` | `validateHabitName()` — empty input, 60-char limit, trimmed return value |
+| `tests/unit/streaks.test.ts` | `calculateCurrentStreak()` — empty array, today not completed, consecutive days, duplicates, gaps |
+| `tests/unit/habits.test.ts` | `toggleHabitCompletion()` — add date, remove date, no mutation, no duplicates |
+| `tests/unit/storage.test.ts` | `getHabitsForUser()`, `saveHabit()`, `deleteHabit()` - CRUD operations |
+| `tests/unit/auth.test.ts` | `signUp()`, `logIn()`, `logOut()` - Authentication operations |
+| `tests/integration/auth-flow.test.tsx` | Signup form creates session, duplicate email error, login stores session, invalid login error |
+| `tests/integration/habit-form.test.tsx` | Habit name validation, create/save to storage, edit preserves immutable fields, delete confirmation, completion toggles streak display |
+| `tests/e2e/app.spec.ts` | Full user flows: splash redirect, auth guard, signup, login, habit CRUD, streak update, reload persistence, logout, offline shell |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+Built for Frontend Wizards Stage 3.
